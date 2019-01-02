@@ -3,6 +3,7 @@ const JSZip = require('jszip');
 const namer = require('color-namer');
 const fontManager = require('font-manager');
 
+var file = '/Users/ladislavjanecek/Documents/zl-web-v1.sketch';
 
 function read(file) {
 
@@ -42,15 +43,12 @@ function read(file) {
 
 function slugify(text) {
   return text.toString().toLowerCase()
-    .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
-
-
-var file = '/Users/ladislavjanecek/Documents/zl-web-v1.sketch';
 
 function getFontFace(font){
 
@@ -80,8 +78,6 @@ read(file).then(sketch => {
                 console.log(getFontFace(fonts[0]));
         });
     })
-
-
 
     sketch[1].assets.colors.forEach((data) => {
 

@@ -1,2 +1,2 @@
-# sketch-parser
-Parse sket file and export colors and fontface
+# Sketch parser
+Parse sketch file and export colors and fontface

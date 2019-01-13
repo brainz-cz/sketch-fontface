@@ -1,125 +1,58 @@
 const fs = require("fs");
-const JSZip = require("jszip");
-const namer = require("color-namer");
-const fontManager = require("font-manager");
+
 const async = require("async");
+const fontManager = require("font-manager");
+
+const Helpers = require("./Helpers");
+const Reader = require("./Reader");
+const Template = require("./Template");
+const Convert = require("./Convert");
 
 var file = "/Users/ladislavjanecek/Documents/zl-web-v1.sketch";
 
-function read(file) {
-	if (Array.isArray(file)) {
-		return Promise.all(file.map(each => read(each)));
-	}
+Reader.read(file).then(sketch => {
+	//console.log(sketch);
 
-	return JSZip.loadAsync(fs.readFileSync(file))
-		.then(zip => {
-			return Promise.all([
-				zip.file("document.json").async("string"),
-				zip.file("meta.json").async("string"),
-				zip.file("user.json").async("string")
-			]).then(result => {
-				return {
-					repo: zip,
-					document: JSON.parse(result[0]),
-					meta: JSON.parse(result[1]),
-					user: JSON.parse(result[2])
-				};
-			});
-		})
-		.then(data => {
-			return Promise.all(
-				data.document.pages.map(page => {
-					return data.repo.file(`${page._ref}.json`).async("string");
-				})
-			).then(pages => {
-				data.pages = pages.map(page => JSON.parse(page));
-				return data;
-			});
-		})
-		.then(data => {
-			return [data.repo, data.document, data.meta, data.user, data.pages];
-		});
-}
+	var fonts = [
+		{
+			name: "some",
+			source: "/Users/ladislavjanecek/Dropbox/BRAINZ's fonts/BRAINZ's fonts.rightfontlibrary/fonts/B/Butler Stencil Bold/Butler_Bold_Stencil.otf",
+			dest: "./data",
+			weight: 200,
+			italic: true
+		},
+		{
+			name: "some2",
+			source: "/Users/ladislavjanecek/Dropbox/BRAINZ's fonts/BRAINZ's fonts.rightfontlibrary/fonts/B/Butler Stencil Bold/Butler_Bold_Stencil.otf",
+			dest: "./data",
+			weight: 400,
+			italic: false
+		}
+	];
 
-function slugify(text) {
-	return text
-		.toString()
-		.toLowerCase()
-		.replace(/\s+/g, "-")
-		.replace(/[^\w\-]+/g, "")
-		.replace(/\-\-+/g, "-")
-		.replace(/^-+/, "")
-		.replace(/-+$/, "");
-}
-
-function getFontFace(fonts, next) {
-
-	var _fonts = []
-	var fontFaces = []
-
-	async.each(
-		fonts,
-		function(font, callback) {
-			fontManager.findFonts({postscriptName: font}, function(fontFamilies) {
-				if (fontFamilies[0])
-					_fonts.push(fontFamilies[0])
-					callback();
+	async.times(
+		fonts.length,
+		function(n, next) {
+			Convert.convert(fonts[n].source, fonts[n].dest, fonts[n].name, function() {
+				next()
 			});
 		},
 		function() {
-
-			_fonts.forEach(fontFamily => {
-
-				var name = slugify(fontFamily.family);
-				var path = "nejakacesta";
-
-				var fontFaceTemplate = `@font-face {
-			        font-family: '${name}';
-			        src: url('${path}/${name}.woff2') format('woff2'),
-			             url('${path}/${name}.woff') format('woff');
-			        font-weight: ${fontFamily.weight};
-			        font-style: ${fontFamily.italic ? "italic" : "normal"};
-				}`;
-
-				console.log(fontFaceTemplate);
-
-				fontFaces.push(fontFaceTemplate)
-				next(fontFaces);
-
-			})
+			Template.generate(fonts);
 		}
 	);
-}
 
-function getColorVariables(colors, next) {
-	var variables = [];
+	// fontManager.findFonts({postscriptName: font}, function(fontFamilies) {
+	//
+	// 	if (fontFamilies[0]) {
+	// 		fontFamilies[0]["filename"] = slugify(fontFamilies[0].postscriptName);
+	// 		fontFamilies[0]["mimetype"] = mime.lookup(fontFamilies[0].path);
+	// 		_fonts.push(fontFamilies[0]);
+	// 	}
+	//
+	// 	callback();
+	// });
 
-	colors.forEach(data => {
-		var rgba = `rgba(${data.red * 100},${data.green * 100},${data.blue * 100},${
-			data.alpha
-		})`;
-
-		var rgb =
-			(data.blue * 100) | ((data.green * 100) << 8) | ((data.red * 100) << 16);
-		var hex = "#" + (0x1000000 + rgb).toString(16).slice(1);
-		var color = data.alpha < 1 ? rgba : hex;
-
-		var name = slugify(namer(color).ntc[0].name);
-
-		variables.push(`$${name}: ${color}`);
-	});
-
-	next(variables);
-}
-
-read(file).then(sketch => {
 	console.log(sketch[2].fonts);
-
-	getFontFace(sketch[2].fonts, function(data) {
-		//console.log(data);
-	});
-
-	getColorVariables(sketch[1].assets.colors, function(data) {
-		console.log(data);
-	});
+	console.log(sketch[1].assets.colors);
 });

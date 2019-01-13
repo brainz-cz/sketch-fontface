@@ -1,0 +1,9 @@
+<% fonts.forEach(function(font){ %>
+@font-face {
+    font-family: '<%= font.name %>';
+    src: url('<%= font.dest %>/<%= font.name %>.woff2') format('woff2'),
+         url('<%= font.dest %>/<%= font.name %>.woff') format('woff');
+    font-weight: <%= font.weight %>$;
+    font-style: <%= font.italic ? "italic" : "normal" %>;
+}
+<% }); %>

@@ -1,4 +1,5 @@
 const fileType = require('file-type');
+const fs = require('fs');
 
 const fontExts = new Set([
 	'eot',
@@ -8,7 +9,7 @@ const fontExts = new Set([
 	'woff2'
 ]);
 
-module.exports = fileChunk => {
-	const info = fileType(fileChunk);
+module.exports = path => {
+	const info = fileType(fs.readFileSync(path));
 	return fontExts.has(info && info.ext) ? info : false;
 };
